@@ -18,7 +18,7 @@
 //     During local development → http://localhost:8000
 //     After deploying to Render → https://your-app-name.onrender.com
 // ══════════════════════════════════════════════════════
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = "https://talentwin-backend.onrender.com";
 
 // Unique ID for this browser session (so conversation memory works)
 // Math.random generates something like "session_0.847392..."
@@ -30,23 +30,21 @@ let isLoading = false;
 // Store Calendly URL after fetching from backend
 let calendlyUrl = "";
 
-
 // ══════════════════════════════════════════════════════
 // 🚀 STARTUP — Run when the page loads
 // ══════════════════════════════════════════════════════
 document.addEventListener("DOMContentLoaded", () => {
-  loadProfile();       // Fill sidebar with profile data
-  fetchCalendlyUrl();  // Load Calendly URL for the button
-  
+  loadProfile(); // Fill sidebar with profile data
+  fetchCalendlyUrl(); // Load Calendly URL for the button
+
   // Show a welcome message in the chat
   addMessage(
     "ai",
     "👋 Hello! I'm an AI agent representing this candidate. " +
-    "I can answer questions about their skills, projects, experience, and more. " +
-    "Feel free to ask anything you'd like to know!"
+      "I can answer questions about their skills, projects, experience, and more. " +
+      "Feel free to ask anything you'd like to know!",
   );
 });
-
 
 // ══════════════════════════════════════════════════════
 // 📊 PROFILE LOADING — Fill the sidebar
@@ -59,25 +57,27 @@ async function loadProfile() {
    */
   try {
     const response = await fetch(`${BACKEND_URL}/profile`);
-    
+
     if (!response.ok) {
       // Profile not loaded on backend yet
-      document.getElementById("candidate-name").textContent = "TalentTwin Agent";
-      document.getElementById("bio-text").textContent = "Profile not yet loaded. Start the backend and call /refresh.";
+      document.getElementById("candidate-name").textContent =
+        "TalentTwin Agent";
+      document.getElementById("bio-text").textContent =
+        "Profile not yet loaded. Start the backend and call /refresh.";
       return;
     }
-    
+
     const data = await response.json();
     fillSidebar(data);
-    
   } catch (error) {
     // Backend is not running at all
     console.error("Could not reach backend:", error);
-    document.getElementById("candidate-name").textContent = "TalentTwin AI Agent";
-    document.getElementById("bio-text").textContent = "⚠️ Backend not connected. Please start the server.";
+    document.getElementById("candidate-name").textContent =
+      "TalentTwin AI Agent";
+    document.getElementById("bio-text").textContent =
+      "⚠️ Backend not connected. Please start the server.";
   }
 }
-
 
 function fillSidebar(data) {
   /**
@@ -85,64 +85,74 @@ function fillSidebar(data) {
    * Uses getElementById to find the HTML elements we defined in index.html.
    */
   const profile = data.profile || {};
-  const repos   = data.repositories || [];
-  const extra   = data.extra_info || {};
-  const langs   = data.languages || [];
-  
+  const repos = data.repositories || [];
+  const extra = data.extra_info || {};
+  const langs = data.languages || [];
+
   // ── Name & Avatar ──
   const name = profile.name || "AI Candidate";
   document.getElementById("candidate-name").textContent = name;
   document.getElementById("candidate-title").textContent =
     extra.preferred_roles || "Software Engineer · AI/ML";
-  
+
   // Avatar: first letter of first name + first letter of last name
-  const initials = name.split(" ")
-    .map(word => word[0])
+  const initials = name
+    .split(" ")
+    .map((word) => word[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
   document.getElementById("avatar").textContent = initials;
-  
+
   // ── Bio ──
   document.getElementById("bio-text").textContent =
     profile.bio || extra.about_me || "No bio available";
-  
+
   // ── Location ──
   document.getElementById("location-text").textContent =
     profile.location || "Location not specified";
-  
+
   // ── Skills (programming languages + extra skills) ──
   const skillsContainer = document.getElementById("skills-tags");
   const allSkills = [...langs, ...(extra.skills || [])];
   const uniqueSkills = [...new Set(allSkills)].slice(0, 12); // Max 12 tags
-  
+
   skillsContainer.innerHTML = uniqueSkills
-    .map(skill => `<span class="tag">${skill}</span>`)
+    .map((skill) => `<span class="tag">${skill}</span>`)
     .join("");
-  
+
   // ── Links ──
   const linksContainer = document.getElementById("links-container");
   const links = [];
-  
-  if (profile.github_url) links.push({ label: "GitHub", url: profile.github_url, icon: "🐙" });
-  if (extra.linkedin)     links.push({ label: "LinkedIn", url: extra.linkedin,   icon: "💼" });
-  if (profile.blog)       links.push({ label: "Portfolio", url: profile.blog,    icon: "🌐" });
-  
-  linksContainer.innerHTML = links
-    .map(link => `
+
+  if (profile.github_url)
+    links.push({ label: "GitHub", url: profile.github_url, icon: "🐙" });
+  if (extra.linkedin)
+    links.push({ label: "LinkedIn", url: extra.linkedin, icon: "💼" });
+  if (profile.blog)
+    links.push({ label: "Portfolio", url: profile.blog, icon: "🌐" });
+
+  linksContainer.innerHTML =
+    links
+      .map(
+        (link) => `
       <a href="${link.url}" target="_blank" rel="noopener" class="link-item">
         <span>${link.icon}</span>
         <span>${link.label}</span>
       </a>
-    `)
-    .join("") || "<p style='color:var(--text-muted); font-size:13px'>No links available</p>";
-  
+    `,
+      )
+      .join("") ||
+    "<p style='color:var(--text-muted); font-size:13px'>No links available</p>";
+
   // ── Top Projects ──
   const projectsList = document.getElementById("projects-list");
   const topRepos = repos.slice(0, 5); // Show top 5
-  
-  projectsList.innerHTML = topRepos
-    .map(repo => `
+
+  projectsList.innerHTML =
+    topRepos
+      .map(
+        (repo) => `
       <div class="project-item">
         <a href="${repo.url}" target="_blank" rel="noopener" class="project-name">
           ${repo.name}
@@ -153,10 +163,11 @@ function fillSidebar(data) {
           <span>⭐ ${repo.stars}</span>
         </div>
       </div>
-    `)
-    .join("") || "<p style='color:var(--text-muted); font-size:13px'>No projects loaded</p>";
+    `,
+      )
+      .join("") ||
+    "<p style='color:var(--text-muted); font-size:13px'>No projects loaded</p>";
 }
-
 
 // ══════════════════════════════════════════════════════
 // 💬 CHAT — Send messages and display responses
@@ -165,7 +176,7 @@ function fillSidebar(data) {
 async function sendMessage() {
   /**
    * Called when the user clicks the Send button (or presses Enter).
-   * 
+   *
    * Flow:
    * 1. Get the question from the textarea
    * 2. Show the user's message in the chat
@@ -173,63 +184,63 @@ async function sendMessage() {
    * 4. POST to /chat endpoint
    * 5. Replace typing indicator with the AI's answer
    */
-  
+
   if (isLoading) return; // Prevent sending while AI is still thinking
-  
+
   const input = document.getElementById("question-input");
   const question = input.value.trim();
-  
+
   if (!question) return; // Don't send empty messages
-  
+
   // Clear input and hide suggestions (they only show once)
   input.value = "";
   autoResize(input);
   hideSuggestions();
-  
+
   // Display user's message
   addMessage("user", question);
-  
+
   // Show typing indicator
   const typingId = showTyping();
-  
+
   // Disable send button while loading
   setLoading(true);
-  
+
   try {
     // ── Call the backend /chat endpoint ──
     const response = await fetch(`${BACKEND_URL}/chat`, {
-      method: "POST",                           // POST request
+      method: "POST", // POST request
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({                    // Send as JSON
+      body: JSON.stringify({
+        // Send as JSON
         question: question,
-        session_id: SESSION_ID
-      })
+        session_id: SESSION_ID,
+      }),
     });
-    
+
     if (!response.ok) {
       // Backend returned an error (e.g. 500 Internal Server Error)
       const errorData = await response.json();
       throw new Error(errorData.detail || `HTTP ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Remove typing indicator and show real answer
     removeTyping(typingId);
     addMessage("ai", data.answer);
-    
   } catch (error) {
     // Network error or backend crashed
     removeTyping(typingId);
-    addMessage("ai", 
+    addMessage(
+      "ai",
       "⚠️ Could not reach the AI agent. Please make sure the backend server is running. " +
-      `Error: ${error.message}`
+        `Error: ${error.message}`,
     );
   }
-  
+
   setLoading(false);
 }
-
 
 function sendSuggestion(text) {
   /**
@@ -240,7 +251,6 @@ function sendSuggestion(text) {
   sendMessage();
 }
 
-
 function addMessage(role, content) {
   /**
    * Creates a message bubble and appends it to the chat area.
@@ -248,26 +258,25 @@ function addMessage(role, content) {
    * content: the text to display
    */
   const container = document.getElementById("chat-messages");
-  
+
   const msgDiv = document.createElement("div");
   msgDiv.className = `message ${role}`;
-  
+
   const avatar = role === "user" ? "👤" : "🤖";
-  
+
   // Convert newlines to <br> tags so multi-line responses look right
   const formattedContent = escapeHtml(content).replace(/\n/g, "<br>");
-  
+
   msgDiv.innerHTML = `
     <div class="msg-avatar">${avatar}</div>
     <div class="msg-bubble">${formattedContent}</div>
   `;
-  
+
   container.appendChild(msgDiv);
-  
+
   // Auto-scroll to the newest message
   container.scrollTop = container.scrollHeight;
 }
-
 
 function showTyping() {
   /**
@@ -276,7 +285,7 @@ function showTyping() {
    */
   const container = document.getElementById("chat-messages");
   const id = "typing-" + Date.now();
-  
+
   const typingDiv = document.createElement("div");
   typingDiv.className = "message ai";
   typingDiv.id = id;
@@ -288,13 +297,12 @@ function showTyping() {
       </div>
     </div>
   `;
-  
+
   container.appendChild(typingDiv);
   container.scrollTop = container.scrollHeight;
-  
+
   return id;
 }
-
 
 function removeTyping(typingId) {
   /**
@@ -303,7 +311,6 @@ function removeTyping(typingId) {
   const elem = document.getElementById(typingId);
   if (elem) elem.remove();
 }
-
 
 // ══════════════════════════════════════════════════════
 // 📅 CALENDLY — Schedule Interview Modal
@@ -326,7 +333,6 @@ async function fetchCalendlyUrl() {
   }
 }
 
-
 function openCalendly() {
   /**
    * Opens the Calendly scheduling modal.
@@ -334,7 +340,7 @@ function openCalendly() {
    */
   const modal = document.getElementById("calendly-modal");
   const container = document.getElementById("calendly-embed-container");
-  
+
   // Build iframe (this is the official Calendly embed method)
   if (calendlyUrl && calendlyUrl !== "https://calendly.com/your-name") {
     container.innerHTML = `
@@ -363,10 +369,9 @@ function openCalendly() {
       </div>
     `;
   }
-  
+
   modal.classList.add("open");
 }
-
 
 function closeCalendly(event) {
   /**
@@ -374,16 +379,15 @@ function closeCalendly(event) {
    * If called from clicking the overlay, only close if clicking outside the modal content.
    */
   const modal = document.getElementById("calendly-modal");
-  
+
   // If clicking the dark overlay itself (not the modal content), close
   if (event && event.target !== modal) return;
-  
+
   modal.classList.remove("open");
-  
+
   // Clear iframe to stop any Calendly scripts running in background
   document.getElementById("calendly-embed-container").innerHTML = "";
 }
-
 
 // ══════════════════════════════════════════════════════
 // 🛠️ UTILITY FUNCTIONS
@@ -400,7 +404,6 @@ function handleKeyDown(event) {
   }
 }
 
-
 function autoResize(textarea) {
   /**
    * Makes the textarea grow taller as the user types more lines.
@@ -410,7 +413,6 @@ function autoResize(textarea) {
   textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
 }
 
-
 function setLoading(state) {
   /**
    * Enable/disable the send button and update icon.
@@ -418,11 +420,10 @@ function setLoading(state) {
   isLoading = state;
   const btn = document.getElementById("send-btn");
   const icon = document.getElementById("send-icon");
-  
+
   btn.disabled = state;
   icon.textContent = state ? "⏳" : "➤";
 }
-
 
 function hideSuggestions() {
   /**
@@ -435,7 +436,6 @@ function hideSuggestions() {
   }
 }
 
-
 function truncate(text, maxLength) {
   /**
    * Truncate text to maxLength characters, adding "..." if truncated.
@@ -443,7 +443,6 @@ function truncate(text, maxLength) {
   if (!text) return "No description";
   return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
 }
-
 
 function escapeHtml(text) {
   /**
